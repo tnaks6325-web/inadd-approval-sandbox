@@ -73,8 +73,10 @@ jobs:
           # 자동화 파일(이 규칙·비교 캡처)을 고친 수정본은 사람이 직접 봐야 한다.
           # 파일 목록 API 는 3000개에서 잘리므로, 갈라진 지점과 지금 수정본의 폴더 트리 해시를 직접 비교한다(조회 실패 시 거절).
           mb=$(gh api "repos/$REPO/compare/main...$sha" --jq .merge_base_commit.sha) || stop "수정본 비교 정보를 읽지 못해 반영하지 않았습니다. GitHub 화면에서 직접 확인해 주세요."
-          tree_sha() { # $1=커밋 $2=상위 폴더(빈칸=맨 위) $3=폴더 이름
-            gh api "repos/$REPO/contents${2:+/$2}?ref=$1" --jq "[.[] | select(.name==\"$3\" and .type==\"dir\") | .sha][0] // \"없음\""; }
+          tree_sha() { # $1=커밋 $2=상위 폴더(빈칸=맨 위) $3=폴더 이름. 상위 폴더가 없으면(404) "없음"
+            local o; o=$(gh api "repos/$REPO/contents${2:+/$2}?ref=$1" --jq "[.[] | select(.name==\"$3\" and .type==\"dir\") | .sha][0] // \"없음\"" 2>&1) \
+              && { echo "$o"; return 0; }
+            case "$o" in *"HTTP 404"*) echo "없음" ;; *) return 1 ;; esac; }
           for spot in ":.github" "scripts:visual-diff"; do
             parent=${spot%%:*}; name=${spot#*:}
             before=$(tree_sha "$mb" "$parent" "$name") && after=$(tree_sha "$sha" "$parent" "$name") \
