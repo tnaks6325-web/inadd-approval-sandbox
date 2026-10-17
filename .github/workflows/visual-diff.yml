@@ -19,4 +19,6 @@ jobs:
       - run: |
           gh pr comment "$PR" --repo "${{ github.repository }}" --body "@${{ github.repository_owner }} 수정본 화면 비교가 준비됐습니다. (커밋 \`${HEAD_SHA:0:7}\`)
 
-          **이 메일에 '승인' 두 글자만 답장하면 실제 사이트에 반영됩니다.** (시험 저장소 — 실제 사이트와 무관)"
+          **이 메일에 '승인' 두 글자만 답장하면 실제 사이트에 반영됩니다.** (시험 저장소 — 실제 사이트와 무관)
+
+          <sub>확인 번호: ${HEAD_SHA}</sub>"
