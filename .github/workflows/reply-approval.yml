@@ -88,7 +88,9 @@ jobs:
           # 지금 수정본과 다르면(옛 메일에 늦게 답장한 경우) 거절한다. 비교 메일을 인용했는데 번호가 없으면(예전 형식) 거절.
           # 인용이 없으면(GitHub 화면에서 쓴 댓글) 아래 시각 비교로만 판단.
           flat=$(printf '%s\n' "$BODY" | tr -d '\r' | grep '^[[:space:]]*>' | sed -E 's/^[[:space:]>]+//' | tr '\n' ' ' || true)
-          quoted=$(printf '%s' "$flat" | grep -oE '확인 번호:? *[0-9a-f]{40}' | head -n1 | grep -oE '[0-9a-f]{40}$' || true)
+          # 메일에서 번호가 커밋 링크로 바뀌어 "확인 번호: abc1234 <https://github.com/…/commit/전체40자리>" 로 인용되기도 한다
+          quoted=$(printf '%s' "$flat" | grep -oE '확인 번호:? *`?[0-9a-f]{7,40}`?( *<https://github\.com/[^ >]*/commit/[0-9a-f]{40}>)?' \
+            | head -n1 | grep -oE '[0-9a-f]{40}' | tail -n1 || true)
           if [ -n "$quoted" ]; then
             [ "$quoted" = "$sha" ] || stop "답장하신 메일은 예전 수정본(커밋 ${quoted:0:7})의 비교 그림입니다. 지금 수정본(커밋 $sha7)의 비교 그림 메일에 다시 '승인'이라고 답장해 주세요."
           elif printf '%s' "$flat" | grep -q '화면 비교가 준비됐습니다'; then
@@ -100,7 +102,7 @@ jobs:
             --jq '[.workflow_runs[] | select(.event=="pull_request")] | sort_by(.created_at) | last | .conclusion // ""')
           # 지금 수정본에 대한 비교 그림 댓글이 승인 답장보다 먼저 올라왔는지
           shown_at=$(gh api --paginate "repos/$REPO/issues/$PR/comments" \
-            --jq ".[] | select(.user.login==\"github-actions[bot]\" and (.body|contains(\"수정본 화면 비교가 준비됐습니다\")) and (.body|contains(\"확인 번호: $sha\"))) | .created_at" | tail -n1)
+            --jq ".[] | select(.user.login==\"github-actions[bot]\" and (.body|contains(\"수정본 화면 비교가 준비됐습니다\")) and (.body|contains(\"$sha\"))) | .created_at" | tail -n1)
           if [ -z "$shown_at" ] || [[ "$shown_at" > "$COMMENT_AT" ]]; then
             if [ "$run_ok" = "failure" ] || [ "$run_ok" = "cancelled" ] || [ "$run_ok" = "timed_out" ]; then
               stop "지금 수정본은 비교 그림을 만들지 못해 답장 승인이 안 됩니다. 테스트 서버에서 확인한 뒤 GitHub 화면에서 직접 승인해 주세요."
