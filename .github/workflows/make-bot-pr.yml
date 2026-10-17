@@ -19,3 +19,4 @@ jobs:
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "남의 수정 시험"
           git push origin "$b"
           gh pr create --base main --head "$b" --title "시험 2: 남이 올린 수정본" --body "시험용"
+# 바꿈
