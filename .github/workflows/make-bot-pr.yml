@@ -1,0 +1,21 @@
+# 시험용: 대표가 아닌 작성자(github-actions)의 PR 을 만들어 '승인 후 병합' 경로를 시험한다.
+name: 시험용 남의 PR 만들기
+on: workflow_dispatch
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          b="bot-test-$(date +%s)"
+          git switch -c "$b"
+          date > bot.txt
+          git add bot.txt
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "남의 수정 시험"
+          git push origin "$b"
+          gh pr create --base main --head "$b" --title "시험 2: 남이 올린 수정본" --body "시험용"
