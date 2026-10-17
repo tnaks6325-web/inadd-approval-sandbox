@@ -1,0 +1,21 @@
+# 시험용: 진짜 화면 비교 대신, 같은 형식의 댓글만 단다.
+name: 화면 비교 캡처
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - run: |
+          gh pr comment "$PR" --repo "${{ github.repository }}" --body "@${{ github.repository_owner }} 수정본 화면 비교가 준비됐습니다. (커밋 \`${HEAD_SHA:0:7}\`)
+
+          **이 메일에 '승인' 두 글자만 답장하면 실제 사이트에 반영됩니다.** (시험 저장소 — 실제 사이트와 무관)"
